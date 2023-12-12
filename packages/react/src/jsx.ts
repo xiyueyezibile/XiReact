@@ -3,7 +3,7 @@ import {
 	ElementType,
 	Type,
 	Props,
-	ReactElement,
+	ReactElementType,
 	Ref
 } from 'shared/ReactTypes';
 /**
@@ -18,7 +18,7 @@ const ReactElement = function (
 	props: Props,
 	key: Key,
 	ref: Ref
-): ReactElement {
+): ReactElementType {
 	const element = {
 		$$typeof: Symbol.for('react.element'),
 		key,
@@ -31,7 +31,9 @@ const ReactElement = function (
 
 export const jsx = function (
 	type: ElementType,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	config: any,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	...maybeChildren: any
 ) {
 	let key: Key = null;
@@ -65,6 +67,28 @@ export const jsx = function (
 	return ReactElement(type, props, key, ref);
 };
 /**
- * @description 开发环境 dev
+ * @description 开发环境 dev 与生产环境 jsx 差别是不接受第三个参数
  */
-export const jsxDEV = jsx;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const jsxDEV = function (type: ElementType, config: any) {
+	let key: Key = null;
+	const props: Props = {};
+	let ref: Ref = null;
+	// 通过 config 对 props 进行赋值
+	Object.keys(config || {}).forEach((prop) => {
+		const val = config[prop];
+		// 对 key 进行单独处理
+		if (prop === 'key') {
+			if (val !== undefined) {
+				key = `${val}`;
+			}
+			// 对 ref 进行单独处理
+		} else if (prop === 'ref') {
+			ref = val;
+			// 剩下的 props 进行逐个赋值
+		} else {
+			props[prop] = val;
+		}
+		return ReactElement(type, props, key, ref);
+	});
+};

@@ -10,3 +10,19 @@
 ## 路径信息
 - `packages` 包存放目录
 - `scripts` 脚本目录
+
+
+## fiber 树结构
+
+```js
+fiberRootNode 容器节点
+ |        |
+ current  stateNode
+ |        |
+hostRootFiber 根节点
+|        |
+ child  return
+ |        |
+App 树
+
+```

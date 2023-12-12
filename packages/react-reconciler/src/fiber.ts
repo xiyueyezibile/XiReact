@@ -1,5 +1,5 @@
-import { Props, Key, Ref } from 'shared/ReactTypes';
-import { WorkTag } from './workTags';
+import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes';
+import { FunctionComponent, HostComponent, WorkTag } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
 /**
@@ -55,6 +55,10 @@ export class FiberNode {
 	 * @description 副作用
 	 */
 	flags: Flags;
+	/**
+	 * @description 子树中包含的副作用
+	 */
+	subtreeFlags: Flags;
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		// 实例属性
 		this.tag = tag;
@@ -79,6 +83,7 @@ export class FiberNode {
 
 		this.alternate = null;
 		this.flags = NoFlags;
+		this.subtreeFlags = NoFlags;
 		this.updateQueue = null;
 	}
 }
@@ -95,7 +100,7 @@ export class FiberRootNode {
 	 */
 	current: FiberNode;
 	/**
-	 * @description 更新完成之后的 hostRootFiber
+	 * @description 更新完成之后的 hostRootFiber 跟节点
 	 */
 	finishedWork: FiberNode | null;
 	constructor(container: Container, hostRootFiber: FiberNode) {
@@ -106,7 +111,7 @@ export class FiberRootNode {
 	}
 }
 /**
- * @description 创建背面缓存
+ * @description 创建背面缓存树
  * @param current
  * @param pendingProps
  * @returns
@@ -129,6 +134,7 @@ export const createWorkInProgress = (
 	} else {
 		wip.pendingProps = pendingProps;
 		wip.flags = NoFlags;
+		wip.subtreeFlags = NoFlags;
 	}
 	wip.type = current.type;
 	wip.updateQueue = current.updateQueue;
@@ -136,3 +142,20 @@ export const createWorkInProgress = (
 	wip.memoizedState = current.memoizedState;
 	return wip;
 };
+/**
+ * @description react 节点转 fiber 节点
+ * @param element
+ * @returns
+ */
+export function createFiberFromElement(element: ReactElementType) {
+	const { type, key, props } = element;
+	let fiberTag: WorkTag = FunctionComponent;
+	if (typeof type === 'string') {
+		fiberTag = HostComponent;
+	} else if (typeof type !== 'function' && __DEV__) {
+		console.warn('不为定义的type类型', element);
+	}
+	const fiber = new FiberNode(fiberTag, props, key);
+	fiber.type = type;
+	return fiber;
+}
